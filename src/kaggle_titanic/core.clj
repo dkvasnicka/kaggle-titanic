@@ -1,5 +1,7 @@
 (ns kaggle-titanic.core
-  (:require [clojure.string :refer [split]]))
+  (:require [clojure.string :refer [split]]
+            [clojure.data.csv :as csv]
+            [clojure.java.io :as io]))
 
 (def sum (partial reduce +))
 
@@ -40,9 +42,23 @@
         entropy-after (sum (map #(* %2 (/ %1 total-size)) 
                                  group-sizes entropies-split))]
     {:infogain (- entropy-current entropy-after)
+     :candidate column-idx
      :groups groups}))
 
 (defn split-data [data candidates]
   (max-key 
     :infogain
     (map (partial groups-and-infogain data) candidates)))
+
+(defn read-csv-columnar [path]
+  (with-open [in-file (io/reader path)]
+    (let [[header & data] (csv/read-csv in-file)]
+      (reduce (fn [colz row]
+                (mapv cons row colz)) 
+              (repeat (count header) '()) 
+              data))))
+
+;(defn build-tree [data candidates]
+;  (loop [d data
+;         c candidates]
+;    ))
