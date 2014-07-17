@@ -46,7 +46,8 @@
      :groups groups}))
 
 (defn split-data [data candidates]
-  (max-key 
+  (apply 
+    max-key 
     :infogain
     (map (partial groups-and-infogain data) candidates)))
 
@@ -58,7 +59,11 @@
               (repeat (count header) '()) 
               data))))
 
-;(defn build-tree [data candidates]
-;  (loop [d data
-;         c candidates]
-;    ))
+(defn build-tree [candidates data]
+  (if (or (empty? candidates) (= 1 (ccount data)))
+    (frequencies (nth data 1))
+    (let [splitted (split-data data candidates)]
+      {(:candidate splitted)
+       (map (partial build-tree 
+                     (disj candidates (:candidate splitted)))
+            (:groups splitted))})))
