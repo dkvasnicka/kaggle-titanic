@@ -51,6 +51,11 @@
     :infogain
     (map (partial groups-and-infogain data) candidates)))
 
+(defmacro apply-rules [rules value]
+  `(cond
+     ~@(mapcat (fn [r] [`(<= ~(first r) ~value ~(second r)) (nth r 2)]) 
+               rules)))
+
 (defn read-csv-columnar [path]
   (with-open [in-file (io/reader path)]
     (let [[header & data] (csv/read-csv in-file)]
@@ -62,8 +67,9 @@
 (defn build-tree [candidates data]
   (if (or (empty? candidates) (= 1 (ccount data)))
     (frequencies (nth data 1))
-    (let [splitted (split-data data candidates)]
-      {(:candidate splitted)
-       (map (partial build-tree 
-                     (disj candidates (:candidate splitted)))
+    (let [splitted (split-data data candidates)
+          splitter (:candidate splitted)
+          remaining-candidates (disj candidates splitter)]
+      {splitter
+       (map (partial build-tree remaining-candidates)
             (:groups splitted))})))
