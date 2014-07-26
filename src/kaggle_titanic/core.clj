@@ -51,10 +51,8 @@
     :infogain
     (map (partial groups-and-infogain data) candidates)))
 
-(defmacro apply-rules [rules value]
-  `(cond
-     ~@(mapcat (fn [r] [`(<= ~(first r) ~value ~(second r)) (nth r 2)]) 
-               rules)))
+(defn apply-rules [rules value]
+  (some #(when (<= (first %) value (second %)) (nth % 2)) rules))
 
 (defn read-csv-columnar [path]
   (with-open [in-file (io/reader path)]
