@@ -52,13 +52,38 @@
     (map (partial groups-and-infogain data) candidates)))
 
 (defn apply-rules [rules value]
-  (some #(when (<= (first %) value (second %)) (nth % 2)) rules))
+  (some #(when (<= (first %) 
+                   (or value (dec (first %))) 
+                   (second %)) 
+           (nth % 2)) 
+        rules))
+
+(def transformers
+  [identity
+   identity
+   identity
+   identity
+   identity
+   (comp
+     (partial apply-rules [[0 10 :kid]
+                           [11 18 :adolescent]
+                           [19 30 :young]
+                           [31 55 :adult]
+                           [56 100 :elderly]])
+     read-string
+     #(clojure.string/replace % #"," "."))
+   identity
+   identity
+   identity
+   first
+   identity])
 
 (defn read-csv-columnar [path]
   (with-open [in-file (io/reader path)]
     (let [[header & data] (csv/read-csv in-file)]
       (reduce (fn [colz row]
-                (mapv cons row colz)) 
+                (mapv #(cons (when (> (count %2) 0) (%1 %2)) %3) 
+                      transformers row colz)) 
               (repeat (count header) '()) 
               data))))
 
