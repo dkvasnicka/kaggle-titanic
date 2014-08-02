@@ -9,7 +9,7 @@
   (loop [columns data
          out {}]
     (if (empty? (first columns))
-      (map vals (vals out))
+      (map (comp vals (partial into (sorted-map))) (vals out))
       (let [current-row (mapv first columns)
             group-key (nth current-row col-idx)]
         (recur (map rest columns)
@@ -75,6 +75,7 @@
    identity
    identity
    identity
+   identity
    first
    identity])
 
@@ -93,6 +94,8 @@
     (let [splitted (split-data data candidates)
           splitter (:candidate splitted)
           remaining-candidates (disj candidates splitter)]
-      {splitter
-       (map (partial build-tree remaining-candidates)
-            (:groups splitted))})))
+      {:splitter splitter
+       :children (into {} 
+                       (map #(vector (first (nth % splitter)) 
+                                     (build-tree remaining-candidates %))
+                            (:groups splitted)))})))
