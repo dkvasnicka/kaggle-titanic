@@ -1,7 +1,9 @@
 (ns kaggle-titanic.core
   (:require [clojure.string :refer [split]]
             [clojure.data.csv :as csv]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [hiccup.core :refer :all]
+            [hiccup.page :refer :all]))
 
 (def sum (partial reduce +))
 
@@ -99,3 +101,16 @@
                        (map #(vector (first (nth % splitter)) 
                                      (build-tree remaining-candidates %))
                             (:groups splitted)))})))
+
+(defmulti htmlize-tree #(contains? % :splitter))
+
+(defmethod htmlize-tree true [tree]
+  [:dl
+    [:dt (str "Splitter: " (:splitter tree))]
+    [:dd [:ul 
+          (map #(vector :li [:h4 (str "Value: " (key %))] 
+                        (htmlize-tree (val %))) 
+              (:children tree))]]])
+
+(defmethod htmlize-tree false [tree]
+  [:h2 (key (apply max-key val tree))])
