@@ -60,28 +60,7 @@
            (nth % 2)) 
         rules))
 
-(def transformers
-  [identity
-   identity
-   identity
-   identity
-   identity
-   (comp
-     (partial apply-rules [[0 10 :kid]
-                           [11 18 :adolescent]
-                           [19 30 :young]
-                           [31 55 :adult]
-                           [56 100 :elderly]])
-     read-string
-     #(clojure.string/replace % #"," "."))
-   identity
-   identity
-   identity
-   identity
-   first
-   identity])
-
-(defn read-csv-columnar [path]
+(defn read-csv-columnar [path transformers]
   (with-open [in-file (io/reader path)]
     (let [[header & data] (csv/read-csv in-file)]
       (reduce (fn [colz row]
